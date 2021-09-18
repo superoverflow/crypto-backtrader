@@ -36,16 +36,16 @@ class SmaCross(bt.Strategy):
 
 
 if __name__ == '__main__':
-    symbol = 'ADAUSDT'
+    symbol = 'BTCUSDT'
     interval = '1d'
     pfast = 20
     pslow = 50
-    cash = 1000
+    cash = 10000
 
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(cash)
-    cerebro.addsizer(bt.sizers.FixedSize, stake=cash)
-    cerebro.broker.setcommission(commission=0.01)
+    #cerebro.addsizer(bt.sizers.AllInSizer)
+    cerebro.broker.setcommission(commission=0.001)
 
     data = bt.feeds.PandasData(
         dataname=loadBinanceData(f"data/{symbol}-{interval}.dat"),
