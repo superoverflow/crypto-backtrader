@@ -1,3 +1,4 @@
+from datetime import date
 import pandas as pd
 import backtrader as bt
 
@@ -9,7 +10,7 @@ def loadBinanceData(filename: str) -> pd.DataFrame:
         usecols=range(0, 6),
         names=["datetime", "high", "low", "open", "close", "volume"]
     )
-    raw["datetime"] = raw["datetime"].apply(lambda x: pd.to_datetime(x/1000))
+    raw["datetime"] = raw["datetime"].apply(lambda x: pd.to_datetime(x/1000, unit='s'))
     raw = raw.set_index('datetime')
     return raw
 
@@ -34,18 +35,30 @@ class SmaCross(bt.Strategy):
             self.close()
 
 
-cerebro = bt.Cerebro()
+if __name__ == '__main__':
+    symbol = 'ADAUSDT'
+    interval = '1d'
+    pfast = 20
+    pslow = 50
+    cash = 1000
 
-data = bt.feeds.PandasData(dataname=loadBinanceData("data/ADAUSDT-1h.dat"))
+    cerebro = bt.Cerebro()
+    cerebro.broker.setcash(cash)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=cash)
+    cerebro.broker.setcommission(commission=0.01)
 
-cerebro.adddata(data)
-cerebro.addstrategy(SmaCross)
-
-start_portfolio_value = cerebro.broker.getvalue()
-cerebro.run()
-cerebro.plot()
-end_portfolio_value = cerebro.broker.getvalue()
-pnl = end_portfolio_value - start_portfolio_value
-print(f'Starting Portfolio Value: {start_portfolio_value:2f}')
-print(f'Final Portfolio Value: {end_portfolio_value:2f}')
-print(f'PnL: {pnl:.2f}')
+    data = bt.feeds.PandasData(
+        dataname=loadBinanceData(f"data/{symbol}-{interval}.dat"),
+        fromdate=date(2015,1,1),
+        todate=date(2020,12,31),
+    )
+    cerebro.adddata(data)
+    cerebro.addstrategy(SmaCross, pfast=pfast, pslow=pslow)
+    start_portfolio_value = cerebro.broker.getvalue()
+    cerebro.run()
+    
+    end_portfolio_value = cerebro.broker.getvalue()
+    pnl = end_portfolio_value - start_portfolio_value
+    
+    print(f'{symbol} PnL: {pnl:.2f}')
+    cerebro.plot()
